@@ -62,52 +62,90 @@ if __name__ == "__main__":
 
     df_train = df_rs.dropna()
 
-    dct_params = {
-        'verbose': True,
-        'criterion': 'mse',
-        'max_features': 'log2',
-        'random_state': 1234,
-        'subsample': 0.9,
-        'max_depth': 5,
-        # 'n_estimators': 1000,
-        # 'presort': False,
+    lst_of_low_corr = [
+        4, 9, 14, 39, 40,
+        56, 65, 86, 100, 132, 145, 149, 151,
+        159, 161, 166, 173, 194, 196, 197, 202,
+        203, 207
+           ]
+    lst_of_not_too_low_corr = [3, 24, 25, 38, 50, 53, 80, 192]
+    lst_hight_self_corr_1 = [102, 103, 104, 105, 106, 107]
+    import matplotlib.pyplot as plt
+    import seaborn
+    df_train = df_train.drop(lst_of_low_corr, axis=1)
+    df_train = df_train.drop(lst_of_not_too_low_corr, axis=1)
+
+    # add spec and drop list of self correlated features 1
+    df_train['spec1'] = df_train[lst_hight_self_corr_1].sum(axis=1)/len(lst_hight_self_corr_1)
+    df_train = df_train.drop(lst_hight_self_corr_1, axis=1)
+
+    lst_hight_self_corr_2 = [146, 148]
+    # add spec and drop list of self correlated features 2
+    df_train['spec2'] = df_train[lst_hight_self_corr_2].sum(axis=1) / len(lst_hight_self_corr_1)
+    df_train = df_train.drop(lst_hight_self_corr_2, axis=1)
 
 
-    }
+    for i in df_train.columns:
+        if i != 'Class':
+            df_train[i] = (df_train[i]-df_train[i].mean(axis=0))/df_train[i].max(axis=0)
 
-    # for i in dir(sklearn):
-    #     for j in eval('dir(sklearn.%s)'%i):
-    #         if 'Classifier' in j:
-    #             print('"from sklearn.', i, ' import ', j, '",', sep='')
+
+    # this block lead to bad result ib beta
+    # from sklearn.feature_selection import f_classif
+    # m = f_classif(df_train.drop(['Class'],axis=1),
+    #                                      df_train['Class'])
+    # imp = list(zip(m[0],df_train.drop(['Class'], axis=1).columns))
+    #
+    #
+    # az = seaborn.heatmap(df_train.corr())
+    # for i in imp:
+    #     print(i)
+    #     if i[0]<2:
+    #         df_train = df_train.drop([i[1]], axis=1)
+    #
+    # from sklearn.decomposition import PCA
+    #
+    # pca = PCA(n_components=20)
+    # y_t = df_train['Class']
+    # rs_sc = pca.fit_transform(df_train[[i for i in df_train.columns if i != 'Class']])
+    # rs_sc_df = pd.DataFrame(rs_sc)
+    # df_train = pd.concat([rs_sc_df, y_t], axis=1)
+    #########
+
+
+    az = seaborn.heatmap(df_train.corr())
+    plt.show()
+
 
     Lst = ["from sklearn.base import ClassifierMixin",
-"from sklearn.ensemble import AdaBoostClassifier",
-"from sklearn.ensemble import BaggingClassifier",
-"from sklearn.ensemble import ExtraTreesClassifier",
-"from sklearn.ensemble import GradientBoostingClassifier",
-"from sklearn.ensemble import RandomForestClassifier",
-"from sklearn.ensemble import VotingClassifier",
-"from sklearn.gaussian_process import GaussianProcessClassifier",
-"from sklearn.linear_model import PassiveAggressiveClassifier",
-"from sklearn.linear_model import RidgeClassifier",
-"from sklearn.linear_model import RidgeClassifierCV",
-"from sklearn.linear_model import SGDClassifier",
-"from sklearn.multiclass import ClassifierMixin",
-"from sklearn.multiclass import OneVsOneClassifier",
-"from sklearn.multiclass import OneVsRestClassifier",
-"from sklearn.multiclass import OutputCodeClassifier",
-"from sklearn.neighbors import KNeighborsClassifier",
-"from sklearn.neighbors import RadiusNeighborsClassifier",
-"from sklearn.neural_network import MLPClassifier",
-"from sklearn.tree import DecisionTreeClassifier",
-"from sklearn.tree import ExtraTreeClassifier"]
+    "from sklearn.ensemble import AdaBoostClassifier",
+    "from sklearn.ensemble import BaggingClassifier",
+    "from sklearn.ensemble import ExtraTreesClassifier",
+    "from sklearn.ensemble import GradientBoostingClassifier",
+    "from sklearn.ensemble import RandomForestClassifier",
+    "from sklearn.ensemble import VotingClassifier",
+    "from sklearn.gaussian_process import GaussianProcessClassifier",
+    "from sklearn.linear_model import PassiveAggressiveClassifier",
+    "from sklearn.linear_model import RidgeClassifier",
+    "from sklearn.linear_model import RidgeClassifierCV",
+    "from sklearn.linear_model import SGDClassifier",
+    "from sklearn.multiclass import ClassifierMixin",
+    "from sklearn.multiclass import OneVsOneClassifier",
+    "from sklearn.multiclass import OneVsRestClassifier",
+    "from sklearn.multiclass import OutputCodeClassifier",
+    "from sklearn.neighbors import KNeighborsClassifier",
+    "from sklearn.neighbors import RadiusNeighborsClassifier",
+    "from sklearn.neural_network import MLPClassifier",
+    "from sklearn.tree import DecisionTreeClassifier",
+    "from sklearn.tree import ExtraTreeClassifier"]
 
     sp = []
-    #df_train = df_train.head(10)
     for i in Lst:
         i = i.split('import ')[1]
         try:
-            rs = Learning(df_train, y_col='Class').trees({}, eval(i), scoring='accuracy')
+            rs = Learning(df_train, y_col='Class').trees({
+
+                }, eval(i), scoring='accuracy')
             print(i, rs)
             if rs > 0.48:
                 sp.append(i)
@@ -118,7 +156,6 @@ if __name__ == "__main__":
         locals()['My'+i] = eval(i)()
 
     print(Learning(df_train, y_col='Class').trees(
-        m_params={'demo_param': [eval('My'+i) for i in sp]},
-        models=CustomEnsembleClassifier,
-        cross=True))
-
+            m_params={'demo_param': [eval('My'+i) for i in sp]},
+            models=CustomEnsembleClassifier,
+            cross=True))
