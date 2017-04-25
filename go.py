@@ -64,27 +64,15 @@ if __name__ == "__main__":
 
     df_train = df_rs.dropna()
 
-    for i in range(10, len(df_train.columns), 10):
-        seaborn.set_style("darkgrid")
-        tips = df_train[list(df_train.columns[i-10:i].values)]
-        print(list(df_train.columns[i-10:i].values))
-        prev = seaborn.boxplot(data=tips)
-        for b in prev.artists:
-            b.set_color('red')
-        for j in range(i - 10, i):
-            Q = tips[j].quantile([.25, .5, .75]).values
-            X2 = Q[0] - 1.5 * (Q[2] - Q[0])
-            X1 = Q[2] + 1.5 * (Q[2] - Q[0])
-            print(j, X1, X2)
-            tips.ix[tips[j] > X1] = tips[j].mean()
-            tips.ix[tips[j] < X2] = tips[j].mean()
-            Q = tips[j].quantile([.25, .5, .75]).values
-            X2 = Q[0] - 1.5 * (Q[2] - Q[0])
-            X1 = Q[2] + 1.5 * (Q[2] - Q[0])
-            print(j, X1, X2)
-        df_train[list(df_train.columns[i - 10:i].values)] = tips
-        seaborn.boxplot(data=tips)
-        #plt.show()
+    for i in df_train.columns:
+        tips = df_train[i]
+        print(i)
+        Q = tips.quantile([.1, .5, .9]).values
+        X2 = Q[0] - 1.5 * (Q[2] - Q[0])
+        X1 = Q[2] + 1.5 * (Q[2] - Q[0])
+        tips.ix[tips > X1] = tips.mean()
+        tips.ix[tips < X2] = tips.mean()
+        df_train[i] = tips
 
     lst_of_low_corr = [
         4, 9, 14, 39, 40,
@@ -98,19 +86,28 @@ if __name__ == "__main__":
     df_train = df_train.drop(lst_of_low_corr, axis=1)
     df_train = df_train.drop(lst_of_not_too_low_corr, axis=1)
 
+    az = seaborn.heatmap(df_train.corr())
+    plt.show()
+
     # add spec and drop list of self correlated features 1
     df_train['spec1'] = df_train[lst_hight_self_corr_1].sum(axis=1)/len(lst_hight_self_corr_1)
     df_train = df_train.drop(lst_hight_self_corr_1, axis=1)
 
-    lst_hight_self_corr_2 = [146, 148]
+    lst_hight_self_corr_2 = [140, 141, 142, 143, 144, 146, 147, 148]
     # add spec and drop list of self correlated features 2
-    df_train['spec2'] = df_train[lst_hight_self_corr_2].sum(axis=1) / len(lst_hight_self_corr_1)
+    df_train['spec2'] = df_train[lst_hight_self_corr_2].sum(axis=1) / len(lst_hight_self_corr_2)
     df_train = df_train.drop(lst_hight_self_corr_2, axis=1)
+
+    lst_hight_self_corr_3 = [180, 181, 182, 183, 184, 185, 186, 187, 188]
+    # add spec and drop list of self correlated features 3
+    df_train['spec3'] = df_train[lst_hight_self_corr_3].sum(axis=1) / len(lst_hight_self_corr_3)
+    df_train = df_train.drop(lst_hight_self_corr_3, axis=1)
 
 
     for i in df_train.columns:
         if i != 'Class':
-            df_train[i] = (df_train[i]-df_train[i].mean(axis=0))/df_train[i].max(axis=0)
+            #df_train[i] = (df_train[i]-df_train[i].mean(axis=0))/df_train[i].max(axis=0)
+            df_train[i] = df_train[i] / df_train[i].max(axis=0)
 
 
     # this block lead to bad result ib beta
@@ -140,8 +137,7 @@ if __name__ == "__main__":
     plt.show()
 
 
-    Lst = ["from sklearn.base import ClassifierMixin",
-    "from sklearn.ensemble import AdaBoostClassifier",
+    Lst = ["from sklearn.ensemble import AdaBoostClassifier",
     "from sklearn.ensemble import BaggingClassifier",
     "from sklearn.ensemble import ExtraTreesClassifier",
     "from sklearn.ensemble import GradientBoostingClassifier",
@@ -172,8 +168,10 @@ if __name__ == "__main__":
             print(i, rs)
             if rs > 0.48:
                 sp.append(i)
-        except:
-            pass
+            fimp = eval(i+' ()').fit(df_train.drop(['Class'], axis=1), df_train.Class)
+            print(list(zip(df_train.drop(['Class'], axis=1).columns, fimp.feature_importances_)))
+        except Exception as e:
+            print(e)
 
     for i in sp:
         locals()['My'+i] = eval(i)()
