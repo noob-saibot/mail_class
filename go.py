@@ -66,9 +66,25 @@ if __name__ == "__main__":
 
     for i in range(10, len(df_train.columns), 10):
         seaborn.set_style("darkgrid")
+        tips = df_train[list(df_train.columns[i-10:i].values)]
         print(list(df_train.columns[i-10:i].values))
-        seaborn.boxplot(data=df_train[list(df_train.columns[i-10:i].values)])
-        plt.show()
+        prev = seaborn.boxplot(data=tips)
+        for b in prev.artists:
+            b.set_color('red')
+        for j in range(i - 10, i):
+            Q = tips[j].quantile([.25, .5, .75]).values
+            X2 = Q[0] - 1.5 * (Q[2] - Q[0])
+            X1 = Q[2] + 1.5 * (Q[2] - Q[0])
+            print(j, X1, X2)
+            tips.ix[tips[j] > X1] = tips[j].mean()
+            tips.ix[tips[j] < X2] = tips[j].mean()
+            Q = tips[j].quantile([.25, .5, .75]).values
+            X2 = Q[0] - 1.5 * (Q[2] - Q[0])
+            X1 = Q[2] + 1.5 * (Q[2] - Q[0])
+            print(j, X1, X2)
+        df_train[list(df_train.columns[i - 10:i].values)] = tips
+        seaborn.boxplot(data=tips)
+        #plt.show()
 
     lst_of_low_corr = [
         4, 9, 14, 39, 40,
