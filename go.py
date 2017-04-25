@@ -53,6 +53,8 @@ class CustomEnsembleClassifier(BaseEstimator, ClassifierMixin):
         return self.y_[closest]
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import seaborn
     df_train = pd.read_csv('x_train.csv', delimiter=';', header=None)
     df_test = pd.read_csv('x_test.csv', delimiter=';', header=None)
     df_sub = pd.read_csv('y_train.csv', delimiter=';', names=['Class'])
@@ -62,6 +64,12 @@ if __name__ == "__main__":
 
     df_train = df_rs.dropna()
 
+    for i in range(10, len(df_train.columns), 10):
+        seaborn.set_style("darkgrid")
+        print(list(df_train.columns[i-10:i].values))
+        seaborn.boxplot(data=df_train[list(df_train.columns[i-10:i].values)])
+        plt.show()
+
     lst_of_low_corr = [
         4, 9, 14, 39, 40,
         56, 65, 86, 100, 132, 145, 149, 151,
@@ -70,8 +78,7 @@ if __name__ == "__main__":
            ]
     lst_of_not_too_low_corr = [3, 24, 25, 38, 50, 53, 80, 192]
     lst_hight_self_corr_1 = [102, 103, 104, 105, 106, 107]
-    import matplotlib.pyplot as plt
-    import seaborn
+
     df_train = df_train.drop(lst_of_low_corr, axis=1)
     df_train = df_train.drop(lst_of_not_too_low_corr, axis=1)
 
