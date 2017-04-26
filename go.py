@@ -178,6 +178,18 @@ if __name__ == "__main__":
     df_train['spec6'] = (df_train['51'] + df_train['54']) / 2
     df_train = df_train.drop(['51', '54'], axis=1)
 
+    from sklearn.feature_selection import SelectFromModel
+    from sklearn.linear_model import LassoCV
+    from sklearn.svm import LinearSVC
+
+    clf = LassoCV()
+
+    sfm = SelectFromModel(clf, threshold=0.1)
+    sfm = LinearSVC(C=100)
+    tmp = df_train.Class
+    df_train = pd.DataFrame(sfm.fit_transform(df_train.drop(['Class'], axis=1), df_train.Class))
+    df_train['Class'] = tmp
+
     # kmeans = KMeans(n_clusters=10, random_state=0).fit(df_train.drop(['Class'], axis=1))
     # df_train['cluster1'] = kmeans.predict(df_train.drop(['Class'], axis=1))
     # kmeans = KMeans(n_clusters=5, random_state=0).fit(df_train.drop(['Class'], axis=1))
